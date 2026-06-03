@@ -131,7 +131,7 @@ async function send(){
   history.push({ role:"user", content:"【咨询公司："+company+"】这是该公司第 "+(rounds+1)+"/"+MAX_ROUNDS+" 轮咨询。\n\n问题："+text });
 
   try {
-    const resp = await fetch("/api/chat", {
+    const resp = await fetch("/.netlify/functions/chat", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
