@@ -397,23 +397,59 @@ async function send(){
     const resp = await fetch("/.netlify/functions/chat", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        system: SYSTEM_PROMPT,
-        messages: history
-      })
+      body: JSON.stringify({ system: SYSTEM_PROMPT, messages: history })
     });
-    const data = await resp.json();
-    let reply = (data.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("\n");
-    reply = cleanMarkdown(reply);
-    if(!reply){
-      // 没拿到正常回答，把后端/Claude返回的错误显示出来，方便排查
-      if(data.error){ reply = "【出错】" + (data.error.message || JSON.stringify(data.error)); }
-      else { reply = "【出错】未知返回：" + JSON.stringify(data).slice(0,300); }
+
+    if(!resp.ok || !resp.body){
+      const t = await resp.text();
+      document.getElementById('thinking').remove();
+      scroll.innerHTML += '<div class="err">服务返回异常（状态'+resp.status+'）：'+esc(t.slice(0,200))+'</div>';
+      inp.disabled=false; const b0=document.getElementById('sendBtn'); if(b0) b0.disabled=false;
+      return;
     }
+
+    // 流式读取：边收边显示
+    const thinkingEl = document.getElementById('thinking');
+    if(thinkingEl) thinkingEl.remove();
+    const wzWrap = document.createElement('div');
+    wzWrap.className = 'msg';
+    wzWrap.innerHTML = '<div class="who wz">卫哲</div><div class="body-text" id="streamReply"></div>';
+    scroll.appendChild(wzWrap);
+    const replyEl = document.getElementById('streamReply');
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let reply = "";
+    let buffer = "";
+    while(true){
+      const { done, value } = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, { stream:true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for(const line of lines){
+        const s = line.trim();
+        if(!s.startsWith("data:")) continue;
+        const jsonStr = s.slice(5).trim();
+        if(!jsonStr || jsonStr === "[DONE]") continue;
+        try {
+          const evt = JSON.parse(jsonStr);
+          if(evt.type === "content_block_delta" && evt.delta && evt.delta.text){
+            reply += evt.delta.text;
+            replyEl.textContent = cleanMarkdown(reply);
+            scroll.scrollTop = scroll.scrollHeight;
+          } else if(evt.type === "error"){
+            reply += "\n【出错】" + (evt.error && evt.error.message ? evt.error.message : JSON.stringify(evt));
+            replyEl.textContent = reply;
+          }
+        } catch(_){ /* 忽略非JSON行 */ }
+      }
+    }
+
+    reply = cleanMarkdown(reply) || "（没有返回内容）";
+    replyEl.textContent = reply;
     history.push({ role:"assistant", content: reply });
     qaLog.push({ q: text, a: reply });
-    document.getElementById('thinking').remove();
-    scroll.innerHTML += '<div class="msg"><div class="who wz">卫哲</div><div class="body-text">'+esc(reply)+'</div></div>';
     rounds++; updateStatus(); renderInput(); scroll.scrollTop = scroll.scrollHeight;
     if(rounds >= MAX_ROUNDS){ saveRecord(); }
   } catch(e){
