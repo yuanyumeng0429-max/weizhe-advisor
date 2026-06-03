@@ -1,4 +1,4 @@
-// netlify/functions/chat.js — 后端函数（运行在 Netlify，藏着你的 API key，转发给 Claude）
+// netlify/functions/chat.js — 后端函数（藏 key，转发给 Claude），带错误日志
 
 exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
@@ -7,7 +7,8 @@ exports.handler = async function (event) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: "服务器未配置 API key" }) };
+    console.log("ERROR: 环境变量 ANTHROPIC_API_KEY 未读取到");
+    return { statusCode: 500, body: JSON.stringify({ error: { message: "服务器未配置 API key（环境变量没生效，需重新部署）" } }) };
   }
 
   try {
@@ -29,8 +30,12 @@ exports.handler = async function (event) {
     });
 
     const data = await r.json();
+    // 把 Claude 的返回打到日志，方便排查
+    console.log("Claude 返回状态:", r.status);
+    console.log("Claude 返回内容:", JSON.stringify(data).slice(0, 500));
     return { statusCode: r.status, body: JSON.stringify(data) };
   } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: String(e) }) };
+    console.log("ERROR 调用异常:", String(e));
+    return { statusCode: 500, body: JSON.stringify({ error: { message: String(e) } }) };
   }
 };
