@@ -434,12 +434,12 @@ async function send(){
         if(!jsonStr || jsonStr === "[DONE]") continue;
         try {
           const evt = JSON.parse(jsonStr);
-          if(evt.type === "content_block_delta" && evt.delta && evt.delta.text){
-            reply += evt.delta.text;
+          if(evt.choices && evt.choices[0] && evt.choices[0].delta && evt.choices[0].delta.content){
+            reply += evt.choices[0].delta.content;
             replyEl.textContent = cleanMarkdown(reply);
             scroll.scrollTop = scroll.scrollHeight;
-          } else if(evt.type === "error"){
-            reply += "\n【出错】" + (evt.error && evt.error.message ? evt.error.message : JSON.stringify(evt));
+          } else if(evt.error){
+            reply += "\n【出错】" + (evt.error.message ? evt.error.message : JSON.stringify(evt.error));
             replyEl.textContent = reply;
           }
         } catch(_){ /* 忽略非JSON行 */ }
