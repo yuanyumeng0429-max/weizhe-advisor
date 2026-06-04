@@ -1,33 +1,34 @@
-// netlify/functions/chat.js — 流式转发，避开30秒超时（v2写法，支持流）
+// netlify/functions/chat.js — 通义千问(OpenAI兼容)+ 联网搜索 + 流式转发
 
 export default async function (req) {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: { message: "Method not allowed" } }), { status: 405 });
   }
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.QWEN_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: { message: "服务器未配置 API key" } }), {
+    return new Response(JSON.stringify({ error: { message: "服务器未配置 QWEN_API_KEY" } }), {
       status: 500, headers: { "Content-Type": "application/json" }
     });
   }
   try {
     const { system, messages } = await req.json();
-    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+    const oaMessages = [{ role: "system", content: system }, ...messages];
+
+    const upstream = await fetch("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
+        "Authorization": "Bearer " + apiKey,
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "qwen-plus",
+        messages: oaMessages,
         max_tokens: 2000,
         stream: true,
-        system: system,
-        messages: messages,
+        enable_search: true,
+        search_options: { search_strategy: "standard" }
       }),
     });
-    // 直接把上游的流式响应透传给前端
     return new Response(upstream.body, {
       status: upstream.status,
       headers: { "Content-Type": "text/event-stream; charset=utf-8" },
