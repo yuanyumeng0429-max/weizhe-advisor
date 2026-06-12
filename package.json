@@ -1,7 +1,7 @@
 {
-  "name": "weizhe-advisor",
-  "version": "1.0.0",
+  "name": "shadow-board",
+  "private": true,
   "dependencies": {
-    "@netlify/blobs": "^8.1.0"
+    "@vercel/blob": "^1.0.0"
   }
 }
