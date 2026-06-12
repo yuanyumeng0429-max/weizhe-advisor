@@ -23,6 +23,8 @@
   .row { display:flex; gap:12px; align-items:flex-end; }
   input, textarea { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(180,150,100,0.3); border-radius:6px; padding:14px 18px; color:#e8e2d6; font-size:15px; outline:none; font-family:system-ui; }
   textarea { resize:none; line-height:1.6; }
+  textarea.full { width:100%; box-sizing:border-box; display:block; }
+  .form-tip { margin-top:10px; font-size:13px; color:#d98a6a; font-family:system-ui; }
   input::placeholder, textarea::placeholder { color:#6e6450; }
   .course-card { margin:26px 0 8px; padding:24px 26px; border:1px solid rgba(201,170,102,0.45); border-radius:10px; background:rgba(201,170,102,0.07); }
   .cc-tag { font-size:12px; letter-spacing:2px; color:#8a8068; font-family:system-ui; margin-bottom:8px; }
@@ -73,10 +75,12 @@
   <div class="entry" id="entry">
     <h1>我是影子董事。你有三个问题的机会。</h1>
     <p>操盘过千亿生意，看过几千个品牌的账。先告诉我你要咨询的公司名字。围绕这家公司，我只回答 <strong class="gold">3 个问题</strong>——增长卡在哪、组织出了什么毛病、要不要融资、出海怎么走。想清楚再问，别浪费。</p>
-    <div class="row">
-      <textarea id="companyInput" rows="2" placeholder="输入公司名称，例如：某某科技 / 我的咖啡品牌（Enter 开始，Shift+Enter 换行）" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();startChat();}"></textarea>
+    <textarea id="companyInput" rows="2" class="full" placeholder="输入公司/品牌名称，例如：某某科技 / 我的咖啡品牌" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();document.getElementById('phoneInput').focus();}"></textarea>
+    <div class="row" style="margin-top:12px;">
+      <input id="phoneInput" type="tel" maxlength="11" placeholder="你的手机号（仅用于顾问与你联系，不对外公开）" onkeydown="if(event.key==='Enter'){event.preventDefault();startChat();}">
       <button class="btn-gold" onclick="startChat()">开始咨询</button>
     </div>
+    <div class="form-tip hidden" id="formTip"></div>
   </div>
   <div class="status hidden" id="chatStatus"></div>
   <div class="scroll hidden" id="scroll"></div>
@@ -359,14 +363,19 @@ const SYSTEM_PROMPT = `# 你是影子董事
 - 不做骑墙派，要么必须，要么不行，不给既要又要的答案。
 `;
 const MAX_ROUNDS = 3;
-let company = "", rounds = 0, history = [], qaLog = [];
+let company = "", phone = "", rounds = 0, history = [], qaLog = [];
 
 window.addEventListener("DOMContentLoaded", function(){ document.getElementById("qrImg").src = QR_DATA; });
 
 function startChat(){
   const v = document.getElementById('companyInput').value.trim();
-  if(!v) return;
-  company = v; rounds = 0; history = []; qaLog = [];
+  const p = document.getElementById('phoneInput').value.trim();
+  const tip = document.getElementById('formTip');
+  if(!v){ tip.textContent = '请先填写公司或品牌名称。'; tip.classList.remove('hidden'); return; }
+  if(!/^1\d{10}$/.test(p)){ tip.textContent = '请填写 11 位手机号，方便顾问与你联系。'; tip.classList.remove('hidden'); return; }
+  tip.classList.add('hidden');
+  company = v; phone = p; rounds = 0; history = []; qaLog = [];
+  saveRecord();
   document.getElementById('entry').classList.add('hidden');
   document.getElementById('resetBtn').classList.remove('hidden');
   document.getElementById('chatStatus').classList.remove('hidden');
@@ -487,20 +496,21 @@ function cleanMarkdown(s){
     .replace(/\*/g, "");              // 兜底：清掉所有残余星号
 }
 function saveRecord(){
-  // 静默保存本次咨询记录到后端（用户无感知）
+  // 静默保存咨询记录与联系方式到后端（用户无感知）
   try {
-    fetch("/.netlify/functions/save-record", {
+    fetch("/api/save-record", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ company: company, qa: qaLog })
+      body: JSON.stringify({ company: company, phone: phone, qa: qaLog, time: new Date().toISOString() })
     });
   } catch(e){ /* 保存失败不影响用户体验 */ }
 }
 function showQR(){ document.getElementById('qrCompany').textContent = company; document.getElementById('qrOverlay').classList.remove('hidden'); }
 function closeQR(){ document.getElementById('qrOverlay').classList.add('hidden'); }
 function reset(){
-  company=""; rounds=0; history=[]; qaLog=[];
+  company=""; phone=""; rounds=0; history=[]; qaLog=[];
   document.getElementById('qrOverlay').classList.add('hidden');
   document.getElementById('companyInput').value="";
+  document.getElementById('phoneInput').value="";
   document.getElementById('entry').classList.remove('hidden');
   document.getElementById('resetBtn').classList.add('hidden');
   document.getElementById('chatStatus').classList.add('hidden');
