@@ -57,8 +57,7 @@
   .qr-card { background:rgba(255,255,255,0.04); border:1px solid rgba(180,150,100,0.22); border-radius:12px; padding:10px; }
   .qr-label { font-size:12px; color:#c9aa66; font-family:system-ui; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .qr-frame { background:#fff; border-radius:10px; padding:8px; display:block; box-shadow:0 6px 20px rgba(0,0,0,0.35); }
-  .qr-frame img { display:block; width:100%; aspect-ratio:1/1.25; object-fit:cover; border-radius:4px; }
-  .qr-frame.primary img { aspect-ratio:1/1; object-fit:contain; }
+  .qr-frame img { display:block; width:100%; aspect-ratio:1/1; object-fit:contain; border-radius:4px; }
   .modal .scan { font-size:14px; color:#c9aa66; font-family:system-ui; margin-bottom:22px; letter-spacing:1px; }
   .modal .again { background:transparent; border:1px solid rgba(180,150,100,0.35); color:#c9aa66; padding:10px 22px; border-radius:6px; cursor:pointer; font-size:13px; font-family:system-ui; }
   .err { color:#d98a6a; font-size:13px; font-family:system-ui; padding:10px 0; }
@@ -110,10 +109,10 @@
     <h2>三个问题，只够把脉。</h2>
     <div class="lead">开方，要坐下来谈。扫码添加顾问，咨询马蹄社课程与深度陪跑，或就 <strong class="gold" id="qrCompany"></strong> 约一次更完整的交流。</div>
     <div class="qr-grid">
-      <div class="qr-card"><div class="qr-label">首席顾问</div><div class="qr-frame primary"><img id="qrImg" alt="微信二维码"></div></div>
-      <div class="qr-card"><div class="qr-label">安苔</div><div class="qr-frame"><img src="assets/qr_anruo.jpg" alt="安苔二维码"></div></div>
-      <div class="qr-card"><div class="qr-label">马蹄社 · 玉香</div><div class="qr-frame"><img src="assets/qr_yuxiang.jpg" alt="玉香二维码"></div></div>
-      <div class="qr-card"><div class="qr-label">紫尘阁 · 致溟</div><div class="qr-frame"><img src="assets/qr_zhihuan.jpg" alt="致溟二维码"></div></div>
+      <div class="qr-card"><div class="qr-label">首席顾问</div><div class="qr-frame"><img id="qrImg" alt="首席顾问二维码"></div></div>
+      <div class="qr-card"><div class="qr-label">课程咨询</div><div class="qr-frame"><img src="assets/qr_anruo.jpg" alt="课程咨询二维码"></div></div>
+      <div class="qr-card"><div class="qr-label">课程咨询</div><div class="qr-frame"><img src="assets/qr_yuxiang.jpg" alt="课程咨询二维码"></div></div>
+      <div class="qr-card"><div class="qr-label">合作咨询</div><div class="qr-frame"><img src="assets/qr_zhihuan.jpg" alt="合作咨询二维码"></div></div>
     </div>
     <button class="again" onclick="closeQR()">先看看，稍后再说</button>
   </div>
