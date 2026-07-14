@@ -1,5 +1,5 @@
 {
-  "name": "shadow-board",
+  "name": "mati-society-advisor",
   "private": true,
   "dependencies": {
     "@vercel/blob": "^1.0.0"
